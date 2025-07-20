@@ -5,15 +5,19 @@ import id.co.awan.tap2pay.model.entity.Hsm;
 import id.co.awan.tap2pay.model.entity.Merchant;
 import id.co.awan.tap2pay.model.entity.Terminal;
 import id.co.awan.tap2pay.repository.HsmRepository;
+import id.co.awan.tap2pay.service.ERC20Service;
 import id.co.awan.tap2pay.service.Tap2PayService;
 import id.co.awan.tap2pay.utils.EthSignUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.util.List;
@@ -27,51 +31,27 @@ public class Tap2PayController {
 
     private final Tap2PayService tap2PayService;
     private final HsmRepository hsmRepository;
+    private final ERC20Service erc20Service;
+
 
     @Operation(
-            summary = "Request user secret key"
+            summary = "Access Card"
     )
     @PostMapping(
-            consumes = MediaType.APPLICATION_JSON_VALUE
+            path = "/resetRegisteredCardTest",
+            consumes = MediaType.TEXT_PLAIN_VALUE,
+            produces = MediaType.TEXT_PLAIN_VALUE
     )
-    @Transactional
-    public ResponseEntity<?>
-    createHsm(
-            @RequestBody
-            CreateHsm req
-    ) throws NoSuchAlgorithmException, SignatureException {
-
-        String saltPkMessage = req.getSaltPkMessage();
-        String ethSignMessage = req.getEthSignMessage();
-        String walletAddress = req.getWalletAddress();
-
-        String addressRecovered = EthSignUtils.ecRecoverAddress(saltPkMessage, ethSignMessage);
-
-        if (!addressRecovered.equalsIgnoreCase(walletAddress)) {
-            throw new IllegalArgumentException("Signature Address recover not match signer");
-        }
-
-        String secretKey = tap2PayService.createHsm(saltPkMessage, addressRecovered);
-
-        return ResponseEntity.ok(secretKey);
-    }
-
-    @Operation(
-            summary = "Request check user secret key"
-    )
-    @GetMapping(
-    )
-    @Transactional
     public ResponseEntity<String>
-    createHsm(
-            @RequestParam(name = "ownerAddress")
-            String ownerAddress
+    resetRegisteredCardForTest(
+            @RequestBody
+            String hashCardUUID
     ) {
 
-        Boolean hsmExist = tap2PayService.isHsmExist(ownerAddress);
-        return ResponseEntity.ok(hsmExist.toString());
-    }
+        tap2PayService.resetRegisteredCard(hashCardUUID);
 
+        return ResponseEntity.ok(hashCardUUID);
+    }
 
     @Operation(
             summary = "RegisterCard"
@@ -160,35 +140,17 @@ public class Tap2PayController {
 
     }
 
-    @Operation(
-            summary = "Access Card"
-    )
-    @PostMapping(
-            path = "/resetRegisteredCardTest",
-            consumes = MediaType.TEXT_PLAIN_VALUE,
-            produces = MediaType.TEXT_PLAIN_VALUE
-    )
-    public ResponseEntity<String>
-    resetRegisteredCardForTest(
-            @RequestBody
-            String hashCardUUID
-    ) {
-
-        tap2PayService.resetRegisteredCard(hashCardUUID);
-
-        return ResponseEntity.ok(hashCardUUID);
-    }
 
     @Operation(
-            summary = "Inquiry Payment"
+            summary = "Inquiry Merchant"
     )
     @PostMapping(
-            path = "/payment-inquiry",
+            path = "/merchant-inquiry",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<PostInquiryPaymentResponse>
-    inquiryPayment(
+    inquiryMerchant(
             @RequestBody
             PostInquiryPaymentRequest request
     ) {
@@ -213,7 +175,7 @@ public class Tap2PayController {
     }
 
     @Operation(
-            summary = "Inquiry Payment"
+            summary = "Do Payment, actually do Inquiry"
     )
     @PostMapping(
             path = "/payment",
@@ -224,24 +186,33 @@ public class Tap2PayController {
     payment(
             @RequestBody
             PostPaymentRequest request
-    ) {
+    ) throws Exception {
 
+        // Validate Terminal
         Terminal terminal = tap2PayService.validateTerminal(
                 request.getTerminalId(),
                 request.getTerminalKey()
         );
 
+        // Validate Merchant
         tap2PayService.validateMerchant(
                 terminal,
                 request.getMerchantId(),
                 request.getMerchantKey()
         );
 
+
+        // Validate Card via HSM
         Hsm hsm = hsmRepository.findByIdAndPin(request.getHashCard(), request.getHashPin())
                 .orElse(null);
-
         if (hsm == null) {
             throw new IllegalArgumentException("Hsm not found");
+        }
+
+        // Validate wallet balance enought
+        BigInteger ownerBalance = erc20Service.getAccountBalance(hsm.getOwnerAddress());
+        if (ownerBalance.compareTo(request.getPaymentAmount()) < 0) {
+            throw new IllegalArgumentException("Owner balance less than payment amount");
         }
 
         return ResponseEntity.ok(hsm.getSecretKey());

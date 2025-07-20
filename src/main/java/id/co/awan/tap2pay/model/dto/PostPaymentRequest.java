@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigInteger;
+
 @Setter
 @Getter
 @AllArgsConstructor
@@ -17,5 +19,6 @@ public class PostPaymentRequest {
     private String terminalKey;
     private String hashCard;
     private String hashPin;
+    private BigInteger paymentAmount;
 
 }

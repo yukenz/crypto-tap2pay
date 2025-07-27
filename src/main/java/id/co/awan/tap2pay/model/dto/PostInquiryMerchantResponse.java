@@ -7,7 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PostInquiryPaymentResponse {
+public class PostInquiryMerchantResponse {
 
     private String merchantName;
     private String merchantAddress;

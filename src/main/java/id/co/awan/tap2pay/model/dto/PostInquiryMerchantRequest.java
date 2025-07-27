@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostInquiryPaymentRequest {
+public class PostInquiryMerchantRequest {
 
     private String merchantId;
     private String merchantKey;

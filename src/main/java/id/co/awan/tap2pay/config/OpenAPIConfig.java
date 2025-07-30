@@ -6,6 +6,11 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.info.License;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Configuration for Swagger OPEN API Definition
+ *
+ * @author yukenz
+ */
 @Configuration
 @OpenAPIDefinition(
         info = @Info(

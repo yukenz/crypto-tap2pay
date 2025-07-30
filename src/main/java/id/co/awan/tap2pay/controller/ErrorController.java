@@ -8,10 +8,16 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
+/**
+ * Class untuk handle semua Error yang terjadi di level Controller
+ */
 @ControllerAdvice
 public class ErrorController {
 
-    @ExceptionHandler(Exception.class)
+    /**
+     * Handle default exception level tertinggi, yaitu {@link  Throwable}
+     */
+    @ExceptionHandler(Throwable.class)
     public ResponseEntity<Object> handleException(Exception ex) {
         // Customize your error response here
         return ResponseEntity
@@ -19,6 +25,9 @@ public class ErrorController {
                 .body(Map.of("error", ex.getMessage()));
     }
 
+    /**
+     * Handle exception yang sudah terdefinisi HTTP
+     */
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Object> handleRcException(ResponseStatusException ex) {
 

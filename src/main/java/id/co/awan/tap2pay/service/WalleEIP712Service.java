@@ -21,22 +21,18 @@ public class WalleEIP712Service {
     @Value("${web3j.contract.walle-eip712}")
     String walleEIP712Address;
 
-    @Deprecated
-    public Address getSignerCardSelfService(
+    private Address getSignerCardSelfService(
             Uint8 operation,
             Bytes32 hashCard,
             Bytes32 hashPin,
             DynamicBytes signature
     ) throws Exception {
 
-        var instance = WalleEIP712Repository
-                .getInstance(rpcUrl, walleEIP712Address);
-
+        WalleEIP712Repository instance = WalleEIP712Repository.getInstance(rpcUrl, walleEIP712Address);
         return instance.getSignerCardSelfService(operation, hashCard, hashPin, signature)
                 .send();
     }
 
-    @Deprecated
     public Address getSignerCardRequestPayment(
             Bytes32 hashCard, Bytes32 hashPin,
             Utf8String merchantId, Utf8String merchantKey,
@@ -45,9 +41,7 @@ public class WalleEIP712Service {
             DynamicBytes signature
     ) throws Exception {
 
-        var instance = WalleEIP712Repository
-                .getInstance(rpcUrl, walleEIP712Address);
-
+        WalleEIP712Repository instance = WalleEIP712Repository.getInstance(rpcUrl, walleEIP712Address);
         return instance.getSignerCardRequestPayment(
                         hashCard, hashPin,
                         merchantId, merchantKey,

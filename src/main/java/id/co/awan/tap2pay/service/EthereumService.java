@@ -28,8 +28,10 @@ public class EthereumService {
     @Value("${web3j.master-key-wallet}")
     private String masterKeyWallet;
 
+    /**
+     * Get native balance for master address in {@code web3j.master-key-wallet}
+     */
     public BigInteger balanceOfMasterKeyWallet() throws ResponseStatusException {
-
         try (Web3j web3 = Web3j.build(new HttpService(rpcUrl));) {
             Credentials credentials = HDWalletUtils.loadCredentialByECPrivateKey(masterKeyWallet);
             EthGetBalance send = web3.ethGetBalance(credentials.getAddress(), DefaultBlockParameterName.LATEST)
@@ -38,16 +40,36 @@ public class EthereumService {
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
+    }
 
+    /**
+     * Get native balance for ethereum address
+     *
+     * @param address EVM Address
+     */
+    public BigInteger balanceOf(String address) throws ResponseStatusException {
+        try (Web3j web3 = Web3j.build(new HttpService(rpcUrl));) {
+            EthGetBalance send = web3.ethGetBalance(address, DefaultBlockParameterName.LATEST)
+                    .send();
+            return send.getBalance();
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
 
+    /**
+     * Native Ethereum Transfer using EIP1559
+     *
+     * @param toAddress EVM Address destination
+     * @param amount    Amount for transfer
+     * @param unit      Unit type for amount
+     */
     public TransactionReceipt transferEtherEIP1559(
             String toAddress,
             BigDecimal amount,
             Convert.Unit unit
     ) throws ResponseStatusException {
-
         try (Web3j web3j = Web3j.build(new HttpService(rpcUrl));) {
 
             Credentials credentials = HDWalletUtils.loadCredentialByECPrivateKey(masterKeyWallet);
@@ -115,7 +137,6 @@ public class EthereumService {
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
-
     }
 
 }

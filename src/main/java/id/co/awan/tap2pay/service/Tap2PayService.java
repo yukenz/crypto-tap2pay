@@ -23,7 +23,12 @@ public class Tap2PayService {
     private final HsmRepository hsmRepository;
     private final TerminalRepository terminalRepository;
 
-    public Merchant validateMerchant(Terminal terminal, String merchantId, String merchantKey) {
+    public Merchant
+    validateMerchant(
+            Terminal terminal,
+            String merchantId,
+            String merchantKey
+    ) {
 
         Merchant merchant = terminal.getMerchant();
 
@@ -38,8 +43,11 @@ public class Tap2PayService {
         return merchant;
     }
 
-
-    public Terminal validateTerminal(String terminalId, String terminalKey) {
+    public Terminal
+    validateTerminal(
+            String terminalId,
+            String terminalKey
+    ) {
 
         return terminalRepository.findByIdAndKey(terminalId, terminalKey)
                 .orElseThrow(() -> new IllegalArgumentException("Terminal validation exception"));
@@ -47,7 +55,10 @@ public class Tap2PayService {
     }
 
     @Transactional
-    public void resetRegisteredCard(String hashCardUUID) {
+    public void
+    resetRegisteredCard(
+            String hashCardUUID
+    ) {
 
         Hsm hsm = hsmRepository.findById(hashCardUUID)
                 .orElse(null);
@@ -64,7 +75,11 @@ public class Tap2PayService {
     }
 
     @Transactional
-    public String createHsm(String saltPk, String ownerAddress) throws NoSuchAlgorithmException {
+    public String
+    createHsm(
+            String saltPk,
+            String ownerAddress
+    ) throws NoSuchAlgorithmException {
 
         Hsm hsm = hsmRepository.findById(saltPk).orElse(null);
 
@@ -87,7 +102,11 @@ public class Tap2PayService {
         return secretKey;
     }
 
-    public String accessCard(String saltPk, String ownerAddress) throws NoSuchAlgorithmException {
+    public String
+    accessCard(
+            String saltPk,
+            String ownerAddress
+    ) throws NoSuchAlgorithmException {
 
         Hsm hsm = hsmRepository.findById(saltPk).orElse(null);
 
@@ -109,12 +128,16 @@ public class Tap2PayService {
         return secretKey;
     }
 
-    public Boolean isHsmExist(String ownerAddress) {
+    public Boolean
+    isHsmExist(
+            String ownerAddress
+    ) {
         return hsmRepository.existsByOwnerAddress(ownerAddress.toLowerCase());
     }
 
     @Transactional
-    public void createCard(
+    public void
+    createCard(
             String hashCard,
             String hashPin,
             String ownerAddress

@@ -8,8 +8,10 @@ import id.co.awan.tap2pay.repository.TerminalRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -23,12 +25,7 @@ public class Tap2PayService {
     private final HsmRepository hsmRepository;
     private final TerminalRepository terminalRepository;
 
-    public Merchant
-    validateMerchant(
-            Terminal terminal,
-            String merchantId,
-            String merchantKey
-    ) {
+    public Merchant validateMerchant(Terminal terminal, String merchantId, String merchantKey) {
 
         Merchant merchant = terminal.getMerchant();
 
@@ -43,11 +40,7 @@ public class Tap2PayService {
         return merchant;
     }
 
-    public Terminal
-    validateTerminal(
-            String terminalId,
-            String terminalKey
-    ) {
+    public Terminal validateTerminal(String terminalId, String terminalKey) {
 
         return terminalRepository.findByIdAndKey(terminalId, terminalKey)
                 .orElseThrow(() -> new IllegalArgumentException("Terminal validation exception"));
@@ -55,10 +48,7 @@ public class Tap2PayService {
     }
 
     @Transactional
-    public void
-    resetRegisteredCard(
-            String hashCardUUID
-    ) {
+    public void resetRegisteredCard(String hashCardUUID) {
 
         Hsm hsm = hsmRepository.findById(hashCardUUID)
                 .orElse(null);
@@ -75,11 +65,7 @@ public class Tap2PayService {
     }
 
     @Transactional
-    public String
-    createHsm(
-            String saltPk,
-            String ownerAddress
-    ) throws NoSuchAlgorithmException {
+    public String createHsm(String saltPk, String ownerAddress) throws NoSuchAlgorithmException {
 
         Hsm hsm = hsmRepository.findById(saltPk).orElse(null);
 
@@ -102,11 +88,7 @@ public class Tap2PayService {
         return secretKey;
     }
 
-    public String
-    accessCard(
-            String saltPk,
-            String ownerAddress
-    ) throws NoSuchAlgorithmException {
+    public String accessCard(String saltPk, String ownerAddress) throws NoSuchAlgorithmException {
 
         Hsm hsm = hsmRepository.findById(saltPk).orElse(null);
 
@@ -128,16 +110,12 @@ public class Tap2PayService {
         return secretKey;
     }
 
-    public Boolean
-    isHsmExist(
-            String ownerAddress
-    ) {
+    public Boolean isHsmExist(String ownerAddress) {
         return hsmRepository.existsByOwnerAddress(ownerAddress.toLowerCase());
     }
 
     @Transactional
-    public void
-    createCard(
+    public void createCard(
             String hashCard,
             String hashPin,
             String ownerAddress
@@ -147,14 +125,14 @@ public class Tap2PayService {
 
         // Cord not issued
         if (hsmResult.isEmpty()) {
-            throw new IllegalArgumentException("Card UUID not valid");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Card UUID not valid");
         }
 
         Hsm hsm = hsmResult.get();
 
         // Cord already registered with some address
         if (hsm.getOwnerAddress() != null) {
-            throw new IllegalArgumentException("Card already registered");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Card already registered");
         }
 
         hsm.setOwnerAddress(ownerAddress.toLowerCase());
@@ -165,5 +143,6 @@ public class Tap2PayService {
         hsmRepository.save(hsm);
 
     }
+
 
 }

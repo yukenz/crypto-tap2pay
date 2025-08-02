@@ -1,6 +1,7 @@
 package id.co.awan.tap2pay.service;
 
 import id.co.awan.tap2pay.utils.HDWalletUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 @Service
+@Slf4j
 public class EthereumService {
 
     @Value("${web3j.rpc-url}")
@@ -27,6 +29,36 @@ public class EthereumService {
 
     @Value("${web3j.master-key-wallet}")
     private String masterKeyWallet;
+
+
+    /**
+     * Get gas price from Chain
+     */
+    public BigInteger gasPrice() throws ResponseStatusException {
+        try (Web3j web3 = Web3j.build(new HttpService(rpcUrl));) {
+            return web3.ethGasPrice().send().getGasPrice();
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    /**
+     * Get gas price from Chain
+     */
+    public void recoverCardGasAvailability(
+            String cardAddress
+    ) throws ResponseStatusException {
+
+        BigInteger cardBalance = balanceOf(cardAddress);
+        BigInteger gasFee = gasPrice().multiply(BigInteger.valueOf(70000L)); // Safe gas 70000L for transferFrom
+
+        if (cardBalance.compareTo(gasFee) < 0) {
+            BigInteger amountForRecover = gasFee.subtract(cardBalance);
+            TransactionReceipt transactionReceipt = transferEtherEIP1559(cardAddress, new BigDecimal(amountForRecover), Convert.Unit.WEI);
+            log.info("Gas fee recover from card adress: {} [{}]", cardAddress, transactionReceipt.getTransactionHash());
+        }
+
+    }
 
     /**
      * Get native balance for master address in {@code web3j.master-key-wallet}

@@ -67,25 +67,32 @@ public class ERC20Service {
         }
     }
 
+
+    /**
+     * @throws ResponseStatusException akan error apabila ketika simulasi transaksi gagal, termasuk jika gas adalah kosong
+     */
     public BigInteger calculateTransferFromTotalSafeGasPrice(
             String cardAddress,
             String ownerAddress,
             String merchantAddress,
             BigInteger amount,
             long percentTotalGasPriceAdditional
-    ) throws ResponseStatusException {
+    ) throws Exception {
 
         BigInteger totalGasPrice = calculateTransferFromTotalGasPrice(cardAddress, ownerAddress, merchantAddress, amount);
         return totalGasPrice.multiply(BigInteger.valueOf(100L + percentTotalGasPriceAdditional))
                 .divide(new BigInteger("100"));
     }
 
+    /**
+     * @throws ResponseStatusException akan error apabila ketika simulasi transaksi gagal, termasuk jika gas adalah kosong
+     */
     public BigInteger calculateTransferFromTotalGasPrice(
             String cardAddress,
             String ownerAddress,
             String merchantAddress,
             BigInteger amount
-    ) throws ResponseStatusException {
+    ) throws Exception {
 
         try (
                 Web3j web3j = Web3j.build(new HttpService(rpcUrl));
@@ -121,7 +128,7 @@ public class ERC20Service {
             return totalGasUsed.multiply(gasPrice);
 
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+            throw e;
         }
     }
 

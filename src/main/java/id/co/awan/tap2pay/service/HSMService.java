@@ -5,6 +5,7 @@ import id.co.awan.tap2pay.repository.HsmRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -23,6 +24,25 @@ public class HSMService {
                 hashPin,
                 address
         );
+    }
+
+    public Optional<Hsm> getHsm(
+            String hashCard,
+            String hashPin
+    ) {
+        return hsmRepository.findByIdAndPin(
+                hashCard,
+                hashPin
+        );
+    }
+
+    public List<String> getCards(String ownerAddress) {
+
+        return hsmRepository.findAllByOwnerAddress(ownerAddress)
+                .stream()
+                .map(Hsm::getId)
+                .toList();
+
     }
 
 }

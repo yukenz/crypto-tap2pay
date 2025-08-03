@@ -145,7 +145,7 @@ public class Tap2PayControllerV2 {
             summary = "Access Card"
     )
     @PostMapping(
-            path = "/card-change-pin",
+            path = "/change-pin",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE
     )

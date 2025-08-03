@@ -6,6 +6,7 @@ import id.co.awan.tap2pay.model.entity.Merchant;
 import id.co.awan.tap2pay.model.entity.Terminal;
 import id.co.awan.tap2pay.repository.HsmRepository;
 import id.co.awan.tap2pay.service.ERC20Service;
+import id.co.awan.tap2pay.service.HSMService;
 import id.co.awan.tap2pay.service.Tap2PayService;
 import id.co.awan.tap2pay.service.WalleEIP712Service;
 import id.co.awan.tap2pay.utils.EthSignUtils;
@@ -34,6 +35,7 @@ public class Tap2PayController {
     private final HsmRepository hsmRepository;
     private final ERC20Service erc20Service;
     private final WalleEIP712Service walleEIP712Service;
+    private final HSMService hSMService;
 
 
     @Operation(
@@ -50,8 +52,7 @@ public class Tap2PayController {
             String hashCardUUID
     ) {
 
-        tap2PayService.resetRegisteredCard(hashCardUUID);
-
+        hSMService.resetHsm(hashCardUUID);
         return ResponseEntity.ok(hashCardUUID);
     }
 
@@ -105,7 +106,6 @@ public class Tap2PayController {
                 .map(Hsm::getId)
                 .toList();
 
-
         return ResponseEntity.ok(response);
     }
 
@@ -120,15 +120,13 @@ public class Tap2PayController {
     public ResponseEntity<String>
     accessCard(
             @RequestBody
-            PostAccessCard req
+            PostCardAccess req
     ) throws SignatureException {
 
         String addressRecovered = EthSignUtils.ecRecoverAddress("CARD_ACCESS", req.getEthSignMessage());
-
         if (!addressRecovered.equalsIgnoreCase(req.getSignerAddress())) {
             throw new IllegalArgumentException("Signature Address recover not match signer");
         }
-
 
         Optional<Hsm> response = hsmRepository.findByIdAndPinAndOwnerAddress(
                 req.getHashCard(),
@@ -139,7 +137,6 @@ public class Tap2PayController {
         return response
                 .map(hsm -> ResponseEntity.ok(hsm.getSecretKey()))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
-
     }
 
 
@@ -217,7 +214,7 @@ public class Tap2PayController {
     payment(
             @RequestBody
             PostPaymentRequest request
-    ) throws Exception {
+    ) {
 
         // Validate Terminal
         Terminal terminal = tap2PayService.validateTerminal(

@@ -9,11 +9,12 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostAccessCard {
+public class PostCardChangePin {
 
     private String signerAddress;
     private String ethSignMessage;
     private String hashCard;
     private String hashPin;
+    private String newHashPin;
 
 }

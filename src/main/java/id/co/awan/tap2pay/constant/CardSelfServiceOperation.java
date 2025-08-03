@@ -5,5 +5,6 @@ package id.co.awan.tap2pay.constant;
  */
 public enum CardSelfServiceOperation {
     REGISER,
-    ACCESS
+    ACCESS,
+    CHANGE_PIN,
 }

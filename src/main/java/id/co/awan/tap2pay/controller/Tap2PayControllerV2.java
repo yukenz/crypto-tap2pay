@@ -57,7 +57,7 @@ public class Tap2PayControllerV2 {
     ) throws SignatureException {
 
         String addressRecovered = EthSignUtils.ecRecoverAddress("CARD_QUERY", ethSignMessage);
-        List<String> cards = hsmService.getCards(addressRecovered);
+        List<String> cards = tap2PayService.getCards(addressRecovered);
 
         return ResponseEntity.ok(cards);
     }
@@ -112,7 +112,7 @@ public class Tap2PayControllerV2 {
     public ResponseEntity<String>
     cardAccess(
             @RequestBody
-            PostAccessCard request
+            PostCardAccess request
     ) throws Exception {
 
         String recoveredAddress = walleEIP712Service.validateCardSelfService(
@@ -135,6 +135,44 @@ public class Tap2PayControllerV2 {
 
     }
 
+    /**
+     * Endpoint untuk melakukan akses kartu.
+     *
+     * @param request Hash Card, Hash PIN, ETH Typed Sign, Signer Address untuk verifikasi akses kartu.,
+     * @return HTTP 200 OK dengan text/plain body berisi secret key jika sukses, Non 200 jika gagal dengan keterangan JSON
+     */
+    @Operation(
+            summary = "Access Card"
+    )
+    @PostMapping(
+            path = "/card-change-pin",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.TEXT_PLAIN_VALUE
+    )
+    public ResponseEntity<String>
+    cardChangePin(
+            @RequestBody
+            PostCardChangePin request
+    ) throws Exception {
+
+        String recoveredAddress = walleEIP712Service.validateCardSelfService(
+                request.getHashCard(),
+                request.getHashPin(),
+                request.getEthSignMessage(),
+                CardSelfServiceOperation.CHANGE_PIN.ordinal(),
+                request.getSignerAddress()
+        );
+
+        hsmService.changePin(
+                request.getHashCard(),
+                request.getHashPin(),
+                request.getNewHashPin(),
+                recoveredAddress
+        );
+
+        return ResponseEntity.ok(null);
+    }
+
 
     /**
      * Endpoint untuk request payment
@@ -151,7 +189,7 @@ public class Tap2PayControllerV2 {
     paymentRequest(
             @RequestBody
             PostPaymentRequest request
-    ) throws Exception {
+    ) {
 
         // Validate Terminal
         Terminal terminal = tap2PayService.validateTerminal(
@@ -186,9 +224,9 @@ public class Tap2PayControllerV2 {
     @PostMapping(
             path = "/card-gass-recovery",
             consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
+            produces = MediaType.TEXT_PLAIN_VALUE
     )
-    public ResponseEntity<PostPaymentResponse>
+    public ResponseEntity<String>
     cardGassRecovery(
             @RequestBody
             PostCardGassRecoveryRequest request

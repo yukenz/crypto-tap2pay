@@ -1,6 +1,7 @@
 package id.co.awan.tap2pay.service;
 
 
+import id.co.awan.tap2pay.exception.EthSignTypeValidationException;
 import id.co.awan.tap2pay.repository.WalleEIP712Repository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -72,17 +73,16 @@ public class WalleEIP712Service {
         DynamicBytes _signature = new DynamicBytes((Numeric.hexStringToByteArray(signTypedMessage)));
         Uint8 _enumOperation = new Uint8(enumOperation); // Register is 0 | Access is 1
 
-        Address rawRecoveredAddress = getSignerCardSelfService(
+        String recoveredAddress = getSignerCardSelfService(
                 _enumOperation,
                 _hashCard,
                 _hashPin,
                 _signature
-        );
+        ).getValue();
 
-        String recoveredAddress = rawRecoveredAddress.getValue();
 
         if (!recoveredAddress.equalsIgnoreCase(signerAddres)) {
-            throw new IllegalArgumentException("Signature Address recover not match signer");
+            throw new EthSignTypeValidationException("Signature Address recover not match signer");
         }
 
         return recoveredAddress;

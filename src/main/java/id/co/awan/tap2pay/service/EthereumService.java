@@ -55,7 +55,9 @@ public class EthereumService {
         if (cardBalance.compareTo(gasFee) < 0) {
             BigInteger amountForRecover = gasFee.subtract(cardBalance);
             TransactionReceipt transactionReceipt = transferEtherEIP1559(cardAddress, new BigDecimal(amountForRecover), Convert.Unit.WEI);
-            log.info("Gas fee recover from card adress: {} [{}]", cardAddress, transactionReceipt.getTransactionHash());
+            log.info("Gas fee recover from card adress {} with amount [{} wei], trx id[{}]", cardAddress, amountForRecover, transactionReceipt.getTransactionHash());
+        } else {
+            log.info("Gas fee is safety state for card address: {} with balance {}", cardAddress, cardBalance);
         }
 
     }

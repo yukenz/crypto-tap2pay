@@ -17,12 +17,12 @@ public class HSMService {
     public Optional<Hsm> getHsm(
             String hashCard,
             String hashPin,
-            String address
+            String ownerAddress
     ) {
         return hsmRepository.findByIdAndPinAndOwnerAddress(
                 hashCard,
                 hashPin,
-                address
+                ownerAddress
         );
     }
 

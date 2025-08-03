@@ -15,5 +15,12 @@ public class PostCardGassRecoveryRequest {
     private String merchantKey;
     private String terminalId;
     private String terminalKey;
+
+    private String hashCard;
+    private String hashPin;
+    private String ethSignMessage;
+
+    private String ownerAddress;
     private String cardAddress;
+
 }

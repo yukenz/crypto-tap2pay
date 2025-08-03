@@ -3,6 +3,7 @@ package id.co.awan.tap2pay.controller;
 import id.co.awan.tap2pay.constant.CardSelfServiceOperation;
 import id.co.awan.tap2pay.model.dto.*;
 import id.co.awan.tap2pay.model.entity.Hsm;
+import id.co.awan.tap2pay.model.entity.Merchant;
 import id.co.awan.tap2pay.model.entity.Terminal;
 import id.co.awan.tap2pay.service.EthereumService;
 import id.co.awan.tap2pay.service.HSMService;
@@ -108,7 +109,7 @@ public class Tap2PayControllerV2 {
             produces = MediaType.TEXT_PLAIN_VALUE
     )
     public ResponseEntity<String>
-    accessCard(
+    cardAccess(
             @RequestBody
             PostAccessCard request
     ) throws Exception {
@@ -158,7 +159,7 @@ public class Tap2PayControllerV2 {
         );
 
         // Validate Merchant
-        tap2PayService.validateMerchant(
+        Merchant merchant = tap2PayService.validateMerchant(
                 terminal,
                 request.getMerchantId(),
                 request.getMerchantKey()
@@ -172,6 +173,7 @@ public class Tap2PayControllerV2 {
         PostPaymentResponse response = PostPaymentResponse.builder()
                 .fromAddress(hsm.getOwnerAddress())
                 .secretKey(hsm.getSecretKey())
+                .toAddress(merchant.getAddress())
                 .build();
 
         return ResponseEntity.ok(response);
@@ -189,7 +191,24 @@ public class Tap2PayControllerV2 {
     cardGassRecovery(
             @RequestBody
             PostCardGassRecoveryRequest request
-    ) {
+    ) throws SignatureException {
+
+
+        // Validate Signature
+        String message = String.format("CARD_GASS_RECOVERY|%s|%s|%s|%s|%s|%s",
+                request.getHashCard(),
+                request.getHashPin(),
+                request.getMerchantId(),
+                request.getMerchantKey(),
+                request.getTerminalId(),
+                request.getTerminalKey()
+        );
+
+        String recoveredAddress = EthSignUtils.ecRecoverAddress(message, request.getEthSignMessage());
+
+        if (!request.getCardAddress().equalsIgnoreCase(recoveredAddress)) {
+            throw new SignatureException("Invalid Signature");
+        }
 
         // Validate Terminal
         Terminal terminal = tap2PayService.validateTerminal(
@@ -203,6 +222,12 @@ public class Tap2PayControllerV2 {
                 request.getMerchantId(),
                 request.getMerchantKey()
         );
+
+
+
+        // Validate Card is Valid Walle
+        hsmService.getHsm(request.getHashCard(), request.getHashPin(), request.getOwnerAddress())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "HSM Not Found"));
 
         // Try to recover card gas availability
         ethereumService.recoverCardGasAvailability(request.getCardAddress());

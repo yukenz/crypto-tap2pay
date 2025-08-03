@@ -9,7 +9,8 @@ import lombok.*;
 @Builder
 public class PostPaymentResponse {
 
-    private String fromAddress;
-    private String secretKey;
+    private String fromAddress; // Wallet Address
+    private String toAddress; // Merchant Address
+    private String secretKey; // HSM Secret Key
 
 }

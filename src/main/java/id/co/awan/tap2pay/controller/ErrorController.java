@@ -2,8 +2,8 @@ package id.co.awan.tap2pay.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Class untuk handle semua Error yang terjadi di level Controller
  */
-@ControllerAdvice
+@RestControllerAdvice
 public class ErrorController {
 
     /**

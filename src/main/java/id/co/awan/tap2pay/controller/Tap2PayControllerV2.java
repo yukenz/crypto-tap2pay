@@ -73,7 +73,8 @@ public class Tap2PayControllerV2 {
     )
     @PostMapping(
             path = "/card-register",
-            consumes = MediaType.APPLICATION_JSON_VALUE
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.TEXT_PLAIN_VALUE
     )
     public ResponseEntity<String>
     cardRegistration(
@@ -180,7 +181,7 @@ public class Tap2PayControllerV2 {
     }
 
     @Operation(
-            summary = "Do Payment Request"
+            summary = "Do Pre Payment, before TransferFrom"
     )
     @PostMapping(
             path = "/card-gass-recovery",
@@ -222,7 +223,6 @@ public class Tap2PayControllerV2 {
                 request.getMerchantId(),
                 request.getMerchantKey()
         );
-
 
 
         // Validate Card is Valid Walle

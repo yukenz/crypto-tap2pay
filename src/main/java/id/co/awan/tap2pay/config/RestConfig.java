@@ -14,6 +14,7 @@ import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
 import org.apache.hc.core5.http.config.Lookup;
 import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.pool.PoolConcurrencyPolicy;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.ssl.TrustStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public class RestConfig {
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) throws Exception {
-        return apacheBasicRestTemplate(restTemplateBuilder);
+        return apachePoolingRestTemplate(restTemplateBuilder);
     }
 
     public RestTemplate simpleRestTemplate(RestTemplateBuilder restTemplateBuilder) {
@@ -79,15 +80,15 @@ public class RestConfig {
 
     }
 
-
     public RestTemplate apachePoolingRestTemplate(RestTemplateBuilder restTemplateBuilder) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
 
         PoolingHttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
                 .useSystemProperties()
                 .setDefaultConnectionConfig(getConnectionConfig())
-                .setMaxConnTotal(10)
-                .setMaxConnPerRoute(10)
+                .setMaxConnTotal(4)
+                .setMaxConnPerRoute(2)
                 .setSSLSocketFactory(getSSLConnectionSocketFactory())
+                .setPoolConcurrencyPolicy(PoolConcurrencyPolicy.LAX)
                 .build();
 
         CloseableHttpClient httpClient = HttpClients.custom()

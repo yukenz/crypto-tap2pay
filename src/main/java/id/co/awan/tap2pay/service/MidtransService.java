@@ -1,7 +1,8 @@
 package id.co.awan.tap2pay.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import id.co.awan.tap2pay.service.abstracts.MidtransServiceAbstract;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -10,22 +11,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
-public class MidtransService {
+public class MidtransService extends MidtransServiceAbstract {
 
     private final RestTemplate restTemplate;
 
     private final String MIDTRANS_TRANSACTION_URL = "https://app.sandbox.midtrans.com/snap/v1/transactions";
 
+
     public String createTransaction(
-            String order_id,
-            Integer gross_amount,
+            String orderId,
+            Integer grossAmount,
             Boolean secure,
-            String first_name,
-            String last_name,
+            String firstName,
+            String lastName,
             String email,
             String phone
     ) {
@@ -33,54 +33,45 @@ public class MidtransService {
         final LinkedMultiValueMap<String, String> HEADERS = new LinkedMultiValueMap<>();
         HEADERS.add(HttpHeaders.CONTENT_TYPE, "application/json");
         HEADERS.add(HttpHeaders.ACCEPT, "application/json");
+        HEADERS.add(HttpHeaders.AUTHORIZATION, midtransBasicAuthorization("SERVER_KEY"));
 
-        final String REQUEST = String.format("""
-                        {
-                            "transaction_details": {
-                                "order_id": "%s",
-                                "gross_amount": %s
-                            },
-                            "credit_card":{
-                                "secure" : %s
-                            },
-                            "customer_details": {
-                                "first_name": "%s",
-                                "last_name": "%s",
-                                "email": "%s",
-                                "phone": "%s"
-                            }
-                        """,
-                order_id,
-                gross_amount,
+        final JsonNode REQUEST = super.generateTransactionRequest(
+                orderId,
+                grossAmount,
                 secure,
-                first_name,
-                last_name,
+                firstName,
+                lastName,
                 email,
                 phone
         );
 
-
-//        ResponseEntity<?> responseEntity = restTemplate
-//                .postForEntity(
-//                        MIDTRANS_TRANSACTION_URL,
-//                        new HttpEntity<>(REQUEST, HEADERS),
-//                        Map.class
-//                );
-
-        ResponseEntity<Map<String, Object>> responseEntity = restTemplate.exchange(
+        ResponseEntity<JsonNode> responseEntity = restTemplate.exchange(
                 MIDTRANS_TRANSACTION_URL,
                 HttpMethod.POST,
                 new HttpEntity<>(REQUEST, HEADERS),
-                new ParameterizedTypeReference<Map<String, Object>>() {
-                }
+                JsonNode.class
         );
 
-        Map<String, Object> response = responseEntity.getBody();
+        JsonNode response = responseEntity.getBody();
 
-        String token = (String) response.get("token");
-        String redirectUrl = (String) response.get("redirect_url");
+        String token = response.at("/token").asText();
+        String redirectUrl = response.at("/redirect_url").asText();
 
         return redirectUrl;
     }
 
+    @Override
+    public String midtransBasicAuthorization(String serverKey) {
+        return "";
+    }
+
+    @Override
+    public String generateOrderId(String ownerAddress) {
+        return "";
+    }
+
+    @Override
+    public String saveToken(String ownerAddress, String midtransTransactionToken) {
+        return "";
+    }
 }

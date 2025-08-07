@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import id.co.awan.tap2pay.model.dto.midtrans.notification.*;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +19,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
 @Service
-
 @RequiredArgsConstructor
 @Slf4j
 public class MidtransNotificationService {
@@ -28,8 +26,14 @@ public class MidtransNotificationService {
     private final ObjectMapper objectMapper;
 
     @Value("${midtrans.server-key}")
-    @Setter
-    private String serverKey;
+    String serverKey;
+
+    @Value("${midtrans.client-key}")
+    String clientKey;
+
+    @Value("${midtrans.merchant-id}")
+    String merchantId;
+
 
     public void validateSignature(JsonNode request) throws NoSuchAlgorithmException, NoSuchProviderException {
 

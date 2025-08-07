@@ -121,7 +121,6 @@ public class RestConfig {
 
     }
 
-
     @NotNull
     private ConnectionConfig getConnectionConfig() {
         return ConnectionConfig.custom()

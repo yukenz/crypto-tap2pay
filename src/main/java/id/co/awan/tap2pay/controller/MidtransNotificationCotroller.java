@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+
 @RestController
 @RequestMapping("/api/midtrans/notification")
 @RequiredArgsConstructor
@@ -32,7 +35,9 @@ public class MidtransNotificationCotroller {
     paymentNotification(
             @RequestBody
             JsonNode request
-    ) {
+    ) throws NoSuchAlgorithmException, NoSuchProviderException {
+
+        midtransNotificationService.validateSignature(request);
 
         try {
             switch (request.at("/payment_type").asText()) {

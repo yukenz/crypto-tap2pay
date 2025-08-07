@@ -2,6 +2,7 @@ package id.co.awan.tap2pay.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import id.co.awan.tap2pay.model.dto.midtrans.notification.TransactionStatusEnum;
 import id.co.awan.tap2pay.service.MidtransNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,33 @@ public class MidtransNotificationCotroller {
             JsonNode request
     ) throws NoSuchAlgorithmException, NoSuchProviderException {
 
+        log.info("paymentNotification : {}", request.toPrettyString());
+
         midtransNotificationService.validateSignature(request);
+
+        String transactionStatus = request.at("/transaction_status").asText();
+
+        try {
+            switch (TransactionStatusEnum.valueOf(transactionStatus.toUpperCase())) {
+                case TransactionStatusEnum.PENDING -> log.info("{}", TransactionStatusEnum.PENDING);
+                case TransactionStatusEnum.CAPTURE -> log.info("{}", TransactionStatusEnum.CAPTURE);
+                case TransactionStatusEnum.SETTLEMENT -> log.info("{}", TransactionStatusEnum.SETTLEMENT);
+                case TransactionStatusEnum.DENY -> log.info("{}", TransactionStatusEnum.DENY);
+                case TransactionStatusEnum.CANCEL -> log.info("{}", TransactionStatusEnum.CANCEL);
+                case TransactionStatusEnum.EXPIRE -> log.info("{}", TransactionStatusEnum.EXPIRE);
+                case TransactionStatusEnum.FAILURE -> log.info("{}", TransactionStatusEnum.FAILURE);
+                case TransactionStatusEnum.REFUND -> log.info("{}", TransactionStatusEnum.REFUND);
+                case TransactionStatusEnum.CHARGEBACK -> log.info("{}", TransactionStatusEnum.CHARGEBACK);
+                case TransactionStatusEnum.PARTIAL_REFUND -> log.info("{}", TransactionStatusEnum.PARTIAL_REFUND);
+                case TransactionStatusEnum.PARTIAL_CHARGEBACK ->
+                        log.info("{}", TransactionStatusEnum.PARTIAL_CHARGEBACK);
+                case TransactionStatusEnum.AUTHORIZE -> log.info("{}", TransactionStatusEnum.AUTHORIZE);
+                default -> midtransNotificationService.defaultProcessPayment(request);
+            }
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+
 
         try {
             switch (request.at("/payment_type").asText()) {

@@ -11,16 +11,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
+
 @Service
 @RequiredArgsConstructor
 public class MidtransService extends MidtransServiceAbstract {
 
     private final RestTemplate restTemplate;
 
-    private final String MIDTRANS_TRANSACTION_URL = "https://app.sandbox.midtrans.com/snap/v1/transactions";
-
-
-    public String createTransaction(
+    public JsonNode createTransaction(
             String orderId,
             Integer grossAmount,
             Boolean secure,
@@ -33,7 +32,7 @@ public class MidtransService extends MidtransServiceAbstract {
         final LinkedMultiValueMap<String, String> HEADERS = new LinkedMultiValueMap<>();
         HEADERS.add(HttpHeaders.CONTENT_TYPE, "application/json");
         HEADERS.add(HttpHeaders.ACCEPT, "application/json");
-        HEADERS.add(HttpHeaders.AUTHORIZATION, midtransBasicAuthorization("SERVER_KEY"));
+        HEADERS.add(HttpHeaders.AUTHORIZATION, "Basic " + midtransBasicAuthorization());
 
         final JsonNode REQUEST = super.generateTransactionRequest(
                 orderId,
@@ -46,23 +45,19 @@ public class MidtransService extends MidtransServiceAbstract {
         );
 
         ResponseEntity<JsonNode> responseEntity = restTemplate.exchange(
-                MIDTRANS_TRANSACTION_URL,
+                super.transactionUrl,
                 HttpMethod.POST,
                 new HttpEntity<>(REQUEST, HEADERS),
                 JsonNode.class
         );
 
-        JsonNode response = responseEntity.getBody();
 
-        String token = response.at("/token").asText();
-        String redirectUrl = response.at("/redirect_url").asText();
-
-        return redirectUrl;
+        return responseEntity.getBody();
     }
 
     @Override
-    public String midtransBasicAuthorization(String serverKey) {
-        return "";
+    public String midtransBasicAuthorization() {
+        return HttpHeaders.encodeBasicAuth(super.serverKey, "", StandardCharsets.UTF_8);
     }
 
     @Override

@@ -3,9 +3,17 @@ package id.co.awan.tap2pay.service.abstracts;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.util.LinkedMultiValueMap;
+
+import java.nio.charset.StandardCharsets;
 
 public abstract class MidtransServiceAbstract {
+
+    @Value("${midtrans.host}")
+    protected String midtransHost;
 
     @Value("${midtrans.url.transaction}")
     protected String transactionUrl;
@@ -13,9 +21,6 @@ public abstract class MidtransServiceAbstract {
     @Value("${midtrans.server-key}")
     protected String serverKey;
 
-    // TODO: Logic untuk AUTH_STRING: Base64Encode("YourServerKey"+":")
-
-    public abstract String midtransBasicAuthorization();
 
     // TODO: Logic untuk manajemen orderId
     public abstract String generateOrderId(String ownerAddress);
@@ -23,7 +28,26 @@ public abstract class MidtransServiceAbstract {
     // TODO: Logic untuk menyimpan token
     public abstract String saveToken(String ownerAddress, String midtransTransactionToken);
 
-    public JsonNode generateTransactionRequest(
+    /**
+     * Logic untuk AUTH_STRING: Base64Encode("YourServerKey"+":")
+     *
+     * @return Base64 Basic Auth
+     */
+    public String midtransBasicAuthorization() {
+        return HttpHeaders.encodeBasicAuth(serverKey, "", StandardCharsets.UTF_8);
+    }
+
+
+    @NotNull
+    protected LinkedMultiValueMap<String, String> midtransCommonHeaders() {
+        final LinkedMultiValueMap<String, String> HEADERS = new LinkedMultiValueMap<>();
+        HEADERS.add(HttpHeaders.CONTENT_TYPE, "application/json");
+        HEADERS.add(HttpHeaders.ACCEPT, "application/json");
+        HEADERS.add(HttpHeaders.AUTHORIZATION, "Basic " + midtransBasicAuthorization());
+        return HEADERS;
+    }
+
+    public JsonNode generateCreateTransactionRequest(
             String orderId,
             Integer grossAmount,
             Boolean secure,
@@ -72,5 +96,6 @@ public abstract class MidtransServiceAbstract {
 
         return requestObject;
     }
+
 
 }

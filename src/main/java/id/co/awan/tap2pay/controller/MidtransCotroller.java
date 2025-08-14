@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/midtrans")
 @RequiredArgsConstructor
 @Slf4j
+@Deprecated
 public class MidtransCotroller {
 
     private final MidtransService midtransService;

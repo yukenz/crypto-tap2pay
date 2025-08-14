@@ -47,13 +47,16 @@ public class MidtransNotificationCotroller {
         try {
             switch (TransactionStatusEnum.valueOf(transactionStatus.toUpperCase())) {
                 case TransactionStatusEnum.PENDING -> log.info("{}", TransactionStatusEnum.PENDING);
+                // Success Case
                 case TransactionStatusEnum.CAPTURE -> log.info("{}", TransactionStatusEnum.CAPTURE);
                 case TransactionStatusEnum.SETTLEMENT -> log.info("{}", TransactionStatusEnum.SETTLEMENT);
-                case TransactionStatusEnum.DENY -> log.info("{}", TransactionStatusEnum.DENY);
+                // Reversal Case
+                case TransactionStatusEnum.REFUND -> log.info("{}", TransactionStatusEnum.REFUND);
                 case TransactionStatusEnum.CANCEL -> log.info("{}", TransactionStatusEnum.CANCEL);
+                // Unsuccess Case
+                case TransactionStatusEnum.DENY -> log.info("{}", TransactionStatusEnum.DENY);
                 case TransactionStatusEnum.EXPIRE -> log.info("{}", TransactionStatusEnum.EXPIRE);
                 case TransactionStatusEnum.FAILURE -> log.info("{}", TransactionStatusEnum.FAILURE);
-                case TransactionStatusEnum.REFUND -> log.info("{}", TransactionStatusEnum.REFUND);
                 case TransactionStatusEnum.CHARGEBACK -> log.info("{}", TransactionStatusEnum.CHARGEBACK);
                 case TransactionStatusEnum.PARTIAL_REFUND -> log.info("{}", TransactionStatusEnum.PARTIAL_REFUND);
                 case TransactionStatusEnum.PARTIAL_CHARGEBACK ->

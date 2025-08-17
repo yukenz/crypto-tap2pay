@@ -9,9 +9,7 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
 import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
-import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.client5.http.ssl.*;
 import org.apache.hc.core5.http.config.Lookup;
 import org.apache.hc.core5.http.config.RegistryBuilder;
 import org.apache.hc.core5.pool.PoolConcurrencyPolicy;
@@ -87,7 +85,8 @@ public class RestConfig {
                 .setDefaultConnectionConfig(getConnectionConfig())
                 .setMaxConnTotal(4)
                 .setMaxConnPerRoute(2)
-                .setSSLSocketFactory(getSSLConnectionSocketFactory())
+//                .setSSLSocketFactory(getSSLConnectionSocketFactory()) //Deprecated
+                .setTlsSocketStrategy(getTLSSocketStrategy())
                 .setPoolConcurrencyPolicy(PoolConcurrencyPolicy.LAX)
                 .build();
 
@@ -104,9 +103,22 @@ public class RestConfig {
 
         RestTemplate restTemplate = restTemplateBuilder.build();
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpClient));
+        restTemplate.setErrorHandler(response -> true); // Bypass Any Error Exception
+
         return restTemplate;
     }
 
+    public TlsSocketStrategy getTLSSocketStrategy() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+
+        TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
+        SSLContext sslContext = SSLContexts.custom()
+                .loadTrustMaterial(null, acceptingTrustStrategy)
+                .build();
+
+        return new DefaultClientTlsStrategy(sslContext);
+    }
+
+    @Deprecated
     public SSLConnectionSocketFactory getSSLConnectionSocketFactory() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
 
         TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;

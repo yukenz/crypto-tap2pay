@@ -3,49 +3,29 @@ package id.co.awan.tap2pay.service.abstracts;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
 
+@RequiredArgsConstructor
 public abstract class MidtransServiceAbstract {
 
-    @Value("${midtrans.host}")
-    protected String midtransHost;
+    private final RestTemplate restTemplate;
 
-    @Value("${midtrans.url.transaction}")
-    protected String transactionUrl;
+
+    @Value("${midtrans.host}")
+    private String midtransHost;
 
     @Value("${midtrans.server-key}")
-    protected String serverKey;
-
-
-    // TODO: Logic untuk manajemen orderId
-    public abstract String generateOrderId(String ownerAddress);
-
-    // TODO: Logic untuk menyimpan token
-    public abstract String saveToken(String ownerAddress, String midtransTransactionToken);
-
-    /**
-     * Logic untuk AUTH_STRING: Base64Encode("YourServerKey"+":")
-     *
-     * @return Base64 Basic Auth
-     */
-    public String midtransBasicAuthorization() {
-        return HttpHeaders.encodeBasicAuth(serverKey, "", StandardCharsets.UTF_8);
-    }
-
-
-    @NotNull
-    protected LinkedMultiValueMap<String, String> midtransCommonHeaders() {
-        final LinkedMultiValueMap<String, String> HEADERS = new LinkedMultiValueMap<>();
-        HEADERS.add(HttpHeaders.CONTENT_TYPE, "application/json");
-        HEADERS.add(HttpHeaders.ACCEPT, "application/json");
-        HEADERS.add(HttpHeaders.AUTHORIZATION, "Basic " + midtransBasicAuthorization());
-        return HEADERS;
-    }
+    private String serverKey;
 
     public JsonNode generateCreateTransactionRequest(
             String orderId,
@@ -95,6 +75,33 @@ public abstract class MidtransServiceAbstract {
         requestObject.set("customer_details", customerDetails);
 
         return requestObject;
+    }
+
+    /*
+     * =================================================================================================================
+     * ORCHESTRATION
+     * =================================================================================================================
+     */
+
+    private String midtransBasicAuthorization() {
+//        return HttpHeaders.encodeBasicAuth(serverKey, "", StandardCharsets.UTF_8);
+        return HttpHeaders.encodeBasicAuth("Administrator", "manage", StandardCharsets.UTF_8);
+    }
+
+    @NotNull
+    protected ResponseEntity<JsonNode> executePostRest(final String midtransPath, final JsonNode request) {
+
+        final LinkedMultiValueMap<String, String> HEADERS = new LinkedMultiValueMap<>();
+        HEADERS.add(HttpHeaders.CONTENT_TYPE, "application/json");
+        HEADERS.add(HttpHeaders.ACCEPT, "application/json");
+        HEADERS.add(HttpHeaders.AUTHORIZATION, "Basic " + midtransBasicAuthorization());
+
+        return restTemplate.exchange(
+                midtransHost + midtransPath,
+                HttpMethod.POST,
+                new HttpEntity<>(request, HEADERS),
+                JsonNode.class
+        );
     }
 
 

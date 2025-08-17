@@ -2,25 +2,23 @@ package id.co.awan.tap2pay.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import id.co.awan.tap2pay.service.abstracts.MidtransServiceAbstract;
-import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.nio.charset.StandardCharsets;
-
 @Service
-@RequiredArgsConstructor
 public class MidtransService extends MidtransServiceAbstract {
 
-    private final RestTemplate restTemplate;
+    @Value("${midtrans.path.transaction}")
+    private String transactionPath;
 
-    public JsonNode createTransaction(
+    public MidtransService(RestTemplate restTemplate) {
+        super(restTemplate);
+    }
+
+    public JsonNode
+    createTransaction(
             String orderId,
             Integer grossAmount,
             Boolean secure,
@@ -30,7 +28,6 @@ public class MidtransService extends MidtransServiceAbstract {
             String phone
     ) {
 
-        final LinkedMultiValueMap<String, String> HEADERS = midtransCommonHeaders();
         final JsonNode REQUEST = super.generateCreateTransactionRequest(
                 orderId,
                 grossAmount,
@@ -41,73 +38,49 @@ public class MidtransService extends MidtransServiceAbstract {
                 phone
         );
 
-        ResponseEntity<JsonNode> responseEntity = restTemplate.exchange(
-                super.transactionUrl,
-                HttpMethod.POST,
-                new HttpEntity<>(REQUEST, HEADERS),
-                JsonNode.class
-        );
-
-
+        /*
+        {
+            "token": "{{snap_token}}",
+            "redirect_url": "https://app.sandbox.midtrans.com/snap/v3/redirection/{{snap_token}}"
+        }
+        */
+        ResponseEntity<JsonNode> responseEntity = executePostRest(transactionPath, REQUEST);
         return responseEntity.getBody();
     }
 
-    public JsonNode cancelTransaction(
+    public JsonNode
+    cancelTransaction(
             String orderId
     ) {
-
-        final LinkedMultiValueMap<String, String> HEADERS = midtransCommonHeaders();
-
-        ResponseEntity<JsonNode> responseEntity = restTemplate.exchange(
-                String.format("%s/v2/%s/cancel", super.midtransHost, orderId),
-                HttpMethod.POST,
-                new HttpEntity<>(null, HEADERS),
-                JsonNode.class
-        );
-
+        String cancelPath = String.format("/v2/%s/cancel", orderId);
+        ResponseEntity<JsonNode> responseEntity = executePostRest(cancelPath, null);
         return responseEntity.getBody();
     }
 
-    public JsonNode refundTransaction(
+    public JsonNode
+    refundTransaction(
             String orderId
     ) {
-
-        final LinkedMultiValueMap<String, String> HEADERS = midtransCommonHeaders();
-
-        ResponseEntity<JsonNode> responseEntity = restTemplate.exchange(
-                String.format("%s/v2/%s/refund", super.midtransHost, orderId),
-                HttpMethod.POST,
-                new HttpEntity<>(null, HEADERS),
-                JsonNode.class
-        );
-
+        String refundPath = String.format("/v2/%s/cancel", orderId);
+        ResponseEntity<JsonNode> responseEntity = executePostRest(refundPath, null);
         return responseEntity.getBody();
     }
 
-    public JsonNode expireTransaction(
+    public JsonNode
+    expireTransaction(
             String orderId
     ) {
-
-        final LinkedMultiValueMap<String, String> HEADERS = midtransCommonHeaders();
-
-        ResponseEntity<JsonNode> responseEntity = restTemplate.exchange(
-                String.format("%s/v2/%s/expire", super.midtransHost, orderId),
-                HttpMethod.POST,
-                new HttpEntity<>(null, HEADERS),
-                JsonNode.class
-        );
-
+        String refundPath = String.format("/v2/%s/expire", orderId);
+        ResponseEntity<JsonNode> responseEntity = executePostRest(refundPath, null);
         return responseEntity.getBody();
     }
 
-
-    @Override
-    public String generateOrderId(String ownerAddress) {
-        return "";
-    }
-
-    @Override
-    public String saveToken(String ownerAddress, String midtransTransactionToken) {
-        return "";
+    public JsonNode
+    statusTransaction(
+            String id
+    ) {
+        String refundPath = String.format("/v2/%s/status", id);
+        ResponseEntity<JsonNode> responseEntity = executePostRest(refundPath, null);
+        return responseEntity.getBody();
     }
 }

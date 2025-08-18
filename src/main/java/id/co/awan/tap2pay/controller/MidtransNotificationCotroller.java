@@ -108,7 +108,7 @@ public class MidtransNotificationCotroller {
         if (transactionReceipt.isEmpty()) {
             onchainReceipt = null;
 
-            if (transactionStatusEnum.equals(TransactionStatusEnum.CAPTURE)) {
+            if (transactionStatusEnum.equals(TransactionStatusEnum.CAPTURE) || transactionStatusEnum.equals(TransactionStatusEnum.SETTLEMENT)) {
                 OnrampTransaction onrampTransaction = rampTransactionService.inquiryByOrderId(orderId);
                 onchainReceipt = erc20MiddlewareService.transfer(
                         onrampTransaction.getChain(),

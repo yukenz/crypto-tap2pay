@@ -64,7 +64,7 @@ public class RampTransactionService {
 
         onrampTransaction.setRedirectUrl(redirectUrl);
         onrampTransaction.setToken(token);
-        onrampTransaction.setTransactionStatus("pending");
+        onrampTransaction.setTransactionStatus("created");
         onrampTransactionRepository.save(onrampTransaction);
     }
 

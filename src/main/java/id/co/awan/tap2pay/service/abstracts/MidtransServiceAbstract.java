@@ -84,8 +84,8 @@ public abstract class MidtransServiceAbstract {
      */
 
     private String midtransBasicAuthorization() {
-//        return HttpHeaders.encodeBasicAuth(serverKey, "", StandardCharsets.UTF_8);
-        return HttpHeaders.encodeBasicAuth("Administrator", "manage", StandardCharsets.UTF_8);
+        return HttpHeaders.encodeBasicAuth(serverKey, "", StandardCharsets.UTF_8);
+//        return HttpHeaders.encodeBasicAuth("Administrator", "manage", StandardCharsets.UTF_8);
     }
 
     @NotNull

@@ -1,16 +1,22 @@
 package id.co.awan.tap2pay.controller;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import id.co.awan.tap2pay.service.MidtransService;
 import id.co.awan.tap2pay.service.RampTransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigInteger;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/fund")
@@ -21,6 +27,7 @@ public class FundController {
 
     private final RampTransactionService rampTransactionService;
     private final MidtransService midtransService;
+    private final ObjectMapper objectMapper;
 
     @GetMapping(
             path = "/inquiry-on-ramp",
@@ -65,7 +72,7 @@ public class FundController {
 
         // Create VA
         try {
-            JsonNode vaDetail = midtransService.createTransaction(
+            ResponseEntity<JsonNode> transaction = midtransService.createTransaction(
                     orderId,
                     amount,
                     true,
@@ -75,11 +82,20 @@ public class FundController {
                     phone
             );
 
-            String redirectUrl = vaDetail.at("/redirect_url").asText(null);
-            String token = vaDetail.at("/token").asText(null);
+            JsonNode vaDetail = transaction.getBody();
+            Assert.notNull(vaDetail, "vaDetail should not be null");
 
-            rampTransactionService.createTransactionOnRampSecondPhase(orderId, redirectUrl, token);
-            return ResponseEntity.ok(vaDetail);
+            if (transaction.getStatusCode().equals(HttpStatus.CREATED)) {
+                String redirectUrl = vaDetail.at("/redirect_url").asText(null);
+                String token = vaDetail.at("/token").asText(null);
+                rampTransactionService.createTransactionOnRampSecondPhase(orderId, redirectUrl, token);
+                return ResponseEntity.ok(vaDetail);
+            } else {
+                String errorMessages = String.join(",", objectMapper.convertValue(vaDetail.at("/error_messages"), new TypeReference<List<String>>() {
+                }));
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, errorMessages);
+            }
+
         } catch (Exception ex) {
             rampTransactionService.errorTransactionOnRampSecondPhase(orderId, ex.getMessage());
             throw ex;

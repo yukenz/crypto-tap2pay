@@ -20,7 +20,7 @@ public class MidtransService extends MidtransServiceAbstract {
         super(restTemplate);
     }
 
-    public JsonNode
+    public ResponseEntity<JsonNode>
     createTransaction(
             String orderId,
             Integer grossAmount,
@@ -55,7 +55,7 @@ public class MidtransService extends MidtransServiceAbstract {
             "redirect_url": "https://app.sandbox.midtrans.com/snap/v3/redirection/{{snap_token}}"
         }
         */
-        return RESPONSE;
+        return responseEntity;
     }
 
     public JsonNode

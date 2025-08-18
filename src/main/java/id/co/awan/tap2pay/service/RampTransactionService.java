@@ -111,6 +111,7 @@ public class RampTransactionService {
         onrampTransaction.setPaymentType(entity.getPaymentType());
         onrampTransaction.setFraudStatus(entity.getFraudStatus());
         onrampTransaction.setCurrency(entity.getCurrency());
+        onrampTransaction.setOnchainReceipt(entity.getOnchainReceipt());
         onrampTransactionRepository.save(onrampTransaction);
 
         return onrampTransaction;

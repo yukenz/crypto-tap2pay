@@ -1,9 +1,11 @@
 package id.co.awan.tap2pay.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import id.co.awan.tap2pay.model.dto.midtrans.notification.TransactionStatusEnum;
+import id.co.awan.tap2pay.model.entity.OnrampTransaction;
+import id.co.awan.tap2pay.service.ERC20MiddlewareService;
 import id.co.awan.tap2pay.service.MidtransNotificationService;
+import id.co.awan.tap2pay.service.RampTransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/midtrans/notification")
@@ -24,8 +29,9 @@ import java.security.NoSuchProviderException;
 @Slf4j
 public class MidtransNotificationCotroller {
 
-    private final ObjectMapper objectMapper;
     private final MidtransNotificationService midtransNotificationService;
+    private final RampTransactionService rampTransactionService;
+    private final ERC20MiddlewareService erc20MiddlewareService;
 
     @PostMapping(
             path = "/payment",
@@ -38,14 +44,21 @@ public class MidtransNotificationCotroller {
             JsonNode request
     ) throws NoSuchAlgorithmException, NoSuchProviderException {
 
-        log.info("paymentNotification : {}", request.toPrettyString());
-
+        log.info("[HTTP-REQUEST - {}:{}] : {}", this.getClass().getSimpleName(), "paymentNotification() : {}", request.toPrettyString());
         midtransNotificationService.validateSignature(request);
 
-        String transactionStatus = request.at("/transaction_status").asText();
+        String orderId = request.at("/order_id").asText(null);
+        String transactionStatus = request.at("/transaction_status").asText(null);
+        String transactionId = request.at("/transaction_id").asText(null);
+        String settlementTime = request.at("/settlement_time").asText(null);
+        String paymentType = request.at("/payment_type").asText(null);
+        String fraudStatus = request.at("/fraud_status").asText(null);
+        String currency = request.at("/currency").asText(null);
 
+
+        TransactionStatusEnum transactionStatusEnum = TransactionStatusEnum.valueOf(transactionStatus.toUpperCase());
         try {
-            switch (TransactionStatusEnum.valueOf(transactionStatus.toUpperCase())) {
+            switch (transactionStatusEnum) {
                 case TransactionStatusEnum.PENDING -> log.info("{}", TransactionStatusEnum.PENDING);
                 // Success Case
                 case TransactionStatusEnum.CAPTURE -> log.info("{}", TransactionStatusEnum.CAPTURE);
@@ -62,7 +75,7 @@ public class MidtransNotificationCotroller {
                 case TransactionStatusEnum.PARTIAL_CHARGEBACK ->
                         log.info("{}", TransactionStatusEnum.PARTIAL_CHARGEBACK);
                 case TransactionStatusEnum.AUTHORIZE -> log.info("{}", TransactionStatusEnum.AUTHORIZE);
-                default -> midtransNotificationService.defaultProcessPayment(request);
+                default -> log.info("payment status undefined {}", transactionStatus);
             }
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -84,6 +97,55 @@ public class MidtransNotificationCotroller {
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
+
+
+        // ========================================================
+        // SEND TOKEN
+        // ========================================================
+        String onchainReceipt;
+        Optional<String> transactionReceipt = rampTransactionService.inquiryTransactionReceipt(orderId);
+
+        if (transactionReceipt.isEmpty()) {
+            onchainReceipt = null;
+
+            if (transactionStatusEnum.equals(TransactionStatusEnum.CAPTURE)) {
+                OnrampTransaction onrampTransaction = rampTransactionService.inquiryByOrderId(orderId);
+                onchainReceipt = erc20MiddlewareService.transfer(
+                        onrampTransaction.getChain(),
+                        onrampTransaction.getErc20Address(),
+                        onrampTransaction.getWalletAddress(),
+                        // TODO: Working on decimals
+                        onrampTransaction.getGrossAmount().toString(),
+                        ERC20MiddlewareService.ScOperation.WRITE
+                );
+            }
+        } else {
+            onchainReceipt = transactionReceipt.get();
+        }
+
+        // ========================================================
+        // UPDATE TRANSACTION SECTION
+        // ========================================================
+
+
+        LocalDateTime settlementTimeDateTime = null;
+        if (settlementTime != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            settlementTimeDateTime = LocalDateTime.parse(settlementTime, formatter);
+        }
+
+        OnrampTransaction onrampTransaction = rampTransactionService.updateTransactionOnRamp(
+                OnrampTransaction.builder()
+                        .orderId(orderId)
+                        .transactionStatus(transactionStatus)
+                        .transactionId(transactionId)
+                        .settlementTime(settlementTimeDateTime)
+                        .paymentType(paymentType)
+                        .fraudStatus(fraudStatus)
+                        .currency(currency)
+                        .onchainReceipt(onchainReceipt)
+                        .build()
+        );
 
         return ResponseEntity.ok(null);
     }

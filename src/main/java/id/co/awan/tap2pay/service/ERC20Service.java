@@ -18,6 +18,7 @@ import org.web3j.tx.gas.DefaultGasProvider;
 import java.math.BigInteger;
 
 @Service
+@Deprecated
 public class ERC20Service {
 
     @Value("${web3j.rpc-url}")

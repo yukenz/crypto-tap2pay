@@ -29,6 +29,9 @@ public class ERC20MiddlewareService {
     @Value("${web3-mdw.authorization}")
     private String web3MiddlewareAuthorization;
 
+    @Value("${web3-mdw.master-key-wallet}")
+    private String masterPrivateKey;
+
     private final RestTemplate restTemplate;
 
     /*
@@ -126,6 +129,23 @@ public class ERC20MiddlewareService {
      * TRANSACTION
      * =================================================================================================================
      */
+
+    public String transfer(
+            String chain,
+            String erc20Address,
+            String destinationAddress,
+            String amount,
+            ScOperation scOperation
+    ) throws ResponseStatusException {
+        return transfer(
+                chain,
+                masterPrivateKey,
+                erc20Address,
+                destinationAddress,
+                amount,
+                scOperation
+        );
+    }
 
     public String transfer(
             String chain,

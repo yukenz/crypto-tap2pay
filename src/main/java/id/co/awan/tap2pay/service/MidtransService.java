@@ -2,12 +2,15 @@ package id.co.awan.tap2pay.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import id.co.awan.tap2pay.service.abstracts.MidtransServiceAbstract;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.web.client.RestTemplate;
 
 @Service
+@Slf4j
 public class MidtransService extends MidtransServiceAbstract {
 
     @Value("${midtrans.path.transaction}")
@@ -38,14 +41,21 @@ public class MidtransService extends MidtransServiceAbstract {
                 phone
         );
 
+        log.info("[HTTP-REQUEST - {}:{}] : {}", this.getClass().getSimpleName(), "createTransaction()", REQUEST.toPrettyString());
+
+        ResponseEntity<JsonNode> responseEntity = executePostRest(transactionPath, REQUEST);
+
+        final JsonNode RESPONSE = responseEntity.getBody();
+        Assert.notNull(RESPONSE, "Rest Template Response shouldn't be null");
+        log.info("[HTTP-RESPONSE - {}:{}] : {}", this.getClass().getSimpleName(), "createTransaction()", RESPONSE.toPrettyString());
+
         /*
         {
             "token": "{{snap_token}}",
             "redirect_url": "https://app.sandbox.midtrans.com/snap/v3/redirection/{{snap_token}}"
         }
         */
-        ResponseEntity<JsonNode> responseEntity = executePostRest(transactionPath, REQUEST);
-        return responseEntity.getBody();
+        return RESPONSE;
     }
 
     public JsonNode

@@ -46,34 +46,43 @@ public class FundController {
             JsonNode request
     ) {
 
-        String firstName = request.at("/first_name").asText();
-        String lastName = request.at("/last_name").asText();
-        String email = request.at("/email").asText();
-        String phone = request.at("/phone").asText();
-        String walletAddress = request.at("/wallet_address").asText();
+        String firstName = request.at("/first_name").asText(null);
+        String lastName = request.at("/last_name").asText(null);
+        String email = request.at("/email").asText(null);
+        String phone = request.at("/phone").asText(null);
+        String walletAddress = request.at("/wallet_address").asText(null);
+        String chain = request.at("/chain").asText(null);
+        String erc20Address = request.at("/erc20_address").asText(null);
         int amount = request.at("/amount").asInt();
 
         // Create OnRamp
         String orderId = rampTransactionService.createTransactionOnRampFirstPhase(
                 walletAddress,
+                chain,
+                erc20Address,
                 BigInteger.valueOf(amount)
         );
 
         // Create VA
-        JsonNode vaDetail = midtransService.createTransaction(
-                orderId,
-                amount,
-                true,
-                firstName,
-                lastName,
-                email,
-                phone
-        );
+        try {
+            JsonNode vaDetail = midtransService.createTransaction(
+                    orderId,
+                    amount,
+                    true,
+                    firstName,
+                    lastName,
+                    email,
+                    phone
+            );
 
-        String redirectUrl = vaDetail.at("/redirect_url").asText();
-        String token = vaDetail.at("/token").asText();
-        rampTransactionService.createTransactionOnRampSecondPhase(orderId, redirectUrl, token);
+            String redirectUrl = vaDetail.at("/redirect_url").asText(null);
+            String token = vaDetail.at("/token").asText(null);
 
-        return ResponseEntity.ok(vaDetail);
+            rampTransactionService.createTransactionOnRampSecondPhase(orderId, redirectUrl, token);
+            return ResponseEntity.ok(vaDetail);
+        } catch (Exception ex) {
+            rampTransactionService.errorTransactionOnRampSecondPhase(orderId, ex.getMessage());
+            throw ex;
+        }
     }
 }

@@ -6,9 +6,11 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.Assert;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class Web3MiddlewareServiceAbstract {
@@ -16,18 +18,21 @@ public class Web3MiddlewareServiceAbstract {
     @Value("${web3-mdw.host}")
     private String web3MiddlewareHost;
 
-    @Value("${web3-mdw.authorization}")
-    private String web3MiddlewareAuthorization;
+    @Value("${web3-mdw.username}")
+    private String web3MiddlewareUsername;
+
+    @Value("${web3-mdw.password}")
+    private String web3MiddlewarePassword;
 
     private final RestTemplate restTemplate;
 
     @NotNull
     protected ResponseEntity<JsonNode> executePostRest(final String erc20MiddlewarePath, final JsonNode request) {
 
-        final LinkedMultiValueMap<String, String> HEADERS = new LinkedMultiValueMap<>();
-        HEADERS.add(HttpHeaders.CONTENT_TYPE, "application/json");
-        HEADERS.add(HttpHeaders.ACCEPT, "application/json");
-        HEADERS.add(HttpHeaders.AUTHORIZATION, web3MiddlewareAuthorization);
+        HttpHeaders HEADERS = new HttpHeaders();
+        HEADERS.setContentType(MediaType.APPLICATION_JSON);
+        HEADERS.setAccept(List.of(MediaType.APPLICATION_JSON));
+        HEADERS.setBasicAuth(web3MiddlewareUsername, web3MiddlewarePassword, StandardCharsets.UTF_8);
 
         return restTemplate.exchange(
                 web3MiddlewareHost + erc20MiddlewarePath,

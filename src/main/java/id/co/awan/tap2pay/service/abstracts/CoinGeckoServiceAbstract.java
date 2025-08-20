@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class CoinGeckoServiceAbstract {
@@ -27,9 +28,9 @@ public class CoinGeckoServiceAbstract {
     @NotNull
     protected ResponseEntity<JsonNode> executePostRest(final String coinGeckoPath, final JsonNode request) {
 
-        final LinkedMultiValueMap<String, String> HEADERS = new LinkedMultiValueMap<>();
-        HEADERS.add(HttpHeaders.CONTENT_TYPE, "application/json");
-        HEADERS.add(HttpHeaders.ACCEPT, "application/json");
+        HttpHeaders HEADERS = new HttpHeaders();
+        HEADERS.setContentType(MediaType.APPLICATION_JSON);
+        HEADERS.setAccept(List.of(MediaType.APPLICATION_JSON));
         HEADERS.add("x-cg-demo-api-key", apiKey);
 
         return restTemplate.exchange(
@@ -48,8 +49,8 @@ public class CoinGeckoServiceAbstract {
                 .build()
                 .toUri();
 
-        final LinkedMultiValueMap<String, String> HEADERS = new LinkedMultiValueMap<>();
-        HEADERS.add(HttpHeaders.ACCEPT, "application/json");
+        HttpHeaders HEADERS = new HttpHeaders();
+        HEADERS.setAccept(List.of(MediaType.APPLICATION_JSON));
         HEADERS.add("x-cg-demo-api-key", apiKey);
 
         return restTemplate.exchange(

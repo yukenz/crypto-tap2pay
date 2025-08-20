@@ -8,11 +8,11 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.Assert;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @RequiredArgsConstructor
 public abstract class MidtransServiceAbstract {
@@ -89,10 +89,10 @@ public abstract class MidtransServiceAbstract {
     @NotNull
     protected ResponseEntity<JsonNode> executePostRest(final String midtransPath, final JsonNode request) {
 
-        final LinkedMultiValueMap<String, String> HEADERS = new LinkedMultiValueMap<>();
-        HEADERS.add(HttpHeaders.CONTENT_TYPE, "application/json");
-        HEADERS.add(HttpHeaders.ACCEPT, "application/json");
-        HEADERS.add(HttpHeaders.AUTHORIZATION, "Basic " + midtransBasicAuthorization());
+        HttpHeaders HEADERS = new HttpHeaders();
+        HEADERS.setContentType(MediaType.APPLICATION_JSON);
+        HEADERS.setAccept(List.of(MediaType.APPLICATION_JSON));
+        HEADERS.setBasicAuth(serverKey, "", StandardCharsets.UTF_8);
 
         return restTemplate.exchange(
                 midtransHost + midtransPath,

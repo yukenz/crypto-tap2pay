@@ -3,58 +3,29 @@ package id.co.awan.tap2pay.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
+import id.co.awan.tap2pay.service.abstracts.Web3MiddlewareServiceAbstract;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigInteger;
 
 @Service
-@RequiredArgsConstructor
-public class ERC20MiddlewareService {
+public class ERC20MiddlewareService extends Web3MiddlewareServiceAbstract {
 
     public enum ScOperation {
         SIMULATE,
         WRITE
     }
 
-    @Value("${web3-mdw.host}")
-    private String web3MiddlewareHost;
-
-    @Value("${web3-mdw.authorization}")
-    private String web3MiddlewareAuthorization;
+    public ERC20MiddlewareService(RestTemplate restTemplate) {
+        super(restTemplate);
+    }
 
     @Value("${web3-mdw.master-key-wallet}")
     private String masterPrivateKey;
-
-    private final RestTemplate restTemplate;
-
-    /*
-     * =================================================================================================================
-     * ORCHESTRATION
-     * =================================================================================================================
-     */
-
-    @NotNull
-    private ResponseEntity<JsonNode> executePostRest(final String erc20MiddlewarePath, final ObjectNode request) {
-
-        final LinkedMultiValueMap<String, String> HEADERS = new LinkedMultiValueMap<>();
-        HEADERS.add(HttpHeaders.CONTENT_TYPE, "application/json");
-        HEADERS.add(HttpHeaders.ACCEPT, "application/json");
-        HEADERS.add(HttpHeaders.AUTHORIZATION, web3MiddlewareAuthorization);
-
-        return restTemplate.exchange(
-                web3MiddlewareHost + erc20MiddlewarePath,
-                HttpMethod.POST,
-                new HttpEntity<>(request, HEADERS),
-                JsonNode.class
-        );
-    }
 
     /*
      * =================================================================================================================
@@ -72,21 +43,10 @@ public class ERC20MiddlewareService {
         REQUEST.put("erc20Address", erc20Address);
 
         ResponseEntity<JsonNode> responseEntity = executePostRest("/api/web3/erc20/read/totalSupply", REQUEST);
-        JsonNode responseJson = responseEntity.getBody();
+        JsonNode responseJson = super.parseResponseJsonNode(responseEntity);
 
-        if (responseJson == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Response Body is Null");
-        } else {
-            String error = responseJson.at("/error").asText("01");
-            String errorDetail = responseJson.at("/errorDetail").asText(null);
-            String data = responseJson.at("/data").asText(null);
-
-            if (data == null) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error + "|" + errorDetail);
-            } else {
-                return new BigInteger(data);
-            }
-        }
+        String data = responseJson.at("/data").asText(null);
+        return new BigInteger(data);
 
     }
 
@@ -97,7 +57,6 @@ public class ERC20MiddlewareService {
             String destinationAddress
     ) throws ResponseStatusException {
 
-
         final ObjectNode REQUEST = JsonNodeFactory.instance.objectNode();
         REQUEST.put("chain", chain);
         REQUEST.put("erc20Address", erc20Address);
@@ -105,24 +64,12 @@ public class ERC20MiddlewareService {
         REQUEST.put("destinationAddress", destinationAddress);
 
         ResponseEntity<JsonNode> responseEntity = executePostRest("/api/web3/erc20/read/allowance", REQUEST);
-        JsonNode responseJson = responseEntity.getBody();
+        JsonNode responseJson = super.parseResponseJsonNode(responseEntity);
 
-        if (responseJson == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Response Body is Null");
-        } else {
-            String error = responseJson.at("/error").asText("01");
-            String errorDetail = responseJson.at("/errorDetail").asText(null);
-            String data = responseJson.at("/data").asText(null);
-
-            if (data == null) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error + "|" + errorDetail);
-            } else {
-                return new BigInteger(data);
-            }
-        }
+        String data = responseJson.at("/data").asText(null);
+        return new BigInteger(data);
 
     }
-
 
     /*
      * =================================================================================================================
@@ -156,7 +103,6 @@ public class ERC20MiddlewareService {
             ScOperation scOperation
     ) throws ResponseStatusException {
 
-
         final ObjectNode REQUEST = JsonNodeFactory.instance.objectNode();
         REQUEST.put("chain", chain);
         REQUEST.put("privateKey", privateKey);
@@ -170,25 +116,15 @@ public class ERC20MiddlewareService {
         };
 
         ResponseEntity<JsonNode> responseEntity = executePostRest(URL_PATH, REQUEST);
-        JsonNode responseJson = responseEntity.getBody();
+        JsonNode responseJson = super.parseResponseJsonNode(responseEntity);
 
-        if (responseJson == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Response Body is Null");
-        } else {
-            String error = responseJson.at("/error").asText("01");
-            String errorDetail = responseJson.at("/errorDetail").asText(null);
-            String trxReceipt = responseJson.at("/trxReceipt").asText(null);
-            String estimateWei = responseJson.at("/estimateWei").asText(null);
+        String trxReceipt = responseJson.at("/trxReceipt").asText(null);
+        String estimateWei = responseJson.at("/estimateWei").asText(null);
 
-            if (trxReceipt == null && estimateWei == null) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error + "|" + errorDetail);
-            } else {
-                return switch (scOperation) {
-                    case SIMULATE -> estimateWei;
-                    case WRITE -> trxReceipt;
-                };
-            }
-        }
+        return switch (scOperation) {
+            case SIMULATE -> estimateWei;
+            case WRITE -> trxReceipt;
+        };
     }
 
 
@@ -216,25 +152,16 @@ public class ERC20MiddlewareService {
         };
 
         ResponseEntity<JsonNode> responseEntity = executePostRest(URL_PATH, REQUEST);
-        JsonNode responseJson = responseEntity.getBody();
+        JsonNode responseJson = super.parseResponseJsonNode(responseEntity);
 
-        if (responseJson == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Response Body is Null");
-        } else {
-            String error = responseJson.at("/error").asText("01");
-            String errorDetail = responseJson.at("/errorDetail").asText(null);
-            String trxReceipt = responseJson.at("/trxReceipt").asText(null);
-            String estimateWei = responseJson.at("/estimateWei").asText(null);
+        String trxReceipt = responseJson.at("/trxReceipt").asText(null);
+        String estimateWei = responseJson.at("/estimateWei").asText(null);
 
-            if (trxReceipt == null && estimateWei == null) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error + "|" + errorDetail);
-            } else {
-                return switch (scOperation) {
-                    case SIMULATE -> estimateWei;
-                    case WRITE -> trxReceipt;
-                };
-            }
-        }
+
+        return switch (scOperation) {
+            case SIMULATE -> estimateWei;
+            case WRITE -> trxReceipt;
+        };
     }
 
     public String approve(
@@ -259,26 +186,15 @@ public class ERC20MiddlewareService {
         };
 
         ResponseEntity<JsonNode> responseEntity = executePostRest(URL_PATH, REQUEST);
-        JsonNode responseJson = responseEntity.getBody();
+        JsonNode responseJson = super.parseResponseJsonNode(responseEntity);
 
-        if (responseJson == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Response Body is Null");
-        } else {
-            String error = responseJson.at("/error").asText("01");
-            String errorDetail = responseJson.at("/errorDetail").asText(null);
-            String trxReceipt = responseJson.at("/trxReceipt").asText(null);
-            String estimateWei = responseJson.at("/estimateWei").asText(null);
+        String trxReceipt = responseJson.at("/trxReceipt").asText(null);
+        String estimateWei = responseJson.at("/estimateWei").asText(null);
 
-            if (trxReceipt == null && estimateWei == null) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error + "|" + errorDetail);
-            } else {
-                return switch (scOperation) {
-                    case SIMULATE -> estimateWei;
-                    case WRITE -> trxReceipt;
-                };
-            }
-        }
+        return switch (scOperation) {
+            case SIMULATE -> estimateWei;
+            case WRITE -> trxReceipt;
+        };
     }
-
 
 }

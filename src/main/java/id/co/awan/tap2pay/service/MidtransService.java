@@ -2,6 +2,7 @@ package id.co.awan.tap2pay.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import id.co.awan.tap2pay.service.abstracts.MidtransServiceAbstract;
+import id.co.awan.tap2pay.utils.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -41,13 +42,12 @@ public class MidtransService extends MidtransServiceAbstract {
                 phone
         );
 
-        log.info("[HTTP-REQUEST - {}:{}] : {}", this.getClass().getSimpleName(), "createTransaction()", REQUEST.toPrettyString());
-
+        String logToken = LogUtils.logHttpRequest(this.getClass(), "createTransaction", REQUEST);
         ResponseEntity<JsonNode> responseEntity = executePostRest(transactionPath, REQUEST);
 
         final JsonNode RESPONSE = responseEntity.getBody();
         Assert.notNull(RESPONSE, "Rest Template Response shouldn't be null");
-        log.info("[HTTP-RESPONSE - {}:{}] : {}", this.getClass().getSimpleName(), "createTransaction()", RESPONSE.toPrettyString());
+        LogUtils.logHttpResponse(logToken, this.getClass(), RESPONSE);
 
         /*
         {

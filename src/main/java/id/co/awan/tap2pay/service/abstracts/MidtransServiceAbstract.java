@@ -20,7 +20,6 @@ public abstract class MidtransServiceAbstract {
 
     private final RestTemplate restTemplate;
 
-
     @Value("${midtrans.host}")
     private String midtransHost;
 

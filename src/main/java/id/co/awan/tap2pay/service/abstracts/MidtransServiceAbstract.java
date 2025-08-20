@@ -6,12 +6,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
 
@@ -101,6 +100,22 @@ public abstract class MidtransServiceAbstract {
                 new HttpEntity<>(request, HEADERS),
                 JsonNode.class
         );
+    }
+
+    @NotNull
+    protected JsonNode parseResponseJsonNode(ResponseEntity<JsonNode> responseEntity) {
+
+        JsonNode responseJson = responseEntity.getBody();
+        Assert.notNull(responseJson, () -> {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "01" + "|" + "ResponseJson should not be null");
+        });
+
+        HttpStatusCode httpStatusCode = responseEntity.getStatusCode();
+        if (!httpStatusCode.equals(HttpStatus.OK)) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "01" + "|" + httpStatusCode);
+        }
+
+        return responseJson;
     }
 
 

@@ -44,9 +44,7 @@ public class MidtransService extends MidtransServiceAbstract {
 
         String logToken = LogUtils.logHttpRequest(this.getClass(), "createTransaction", REQUEST);
         ResponseEntity<JsonNode> responseEntity = executePostRest(transactionPath, REQUEST);
-
-        final JsonNode RESPONSE = responseEntity.getBody();
-        Assert.notNull(RESPONSE, "Rest Template Response shouldn't be null");
+        final JsonNode RESPONSE = super.parseResponseJsonNode(responseEntity);
         LogUtils.logHttpResponse(logToken, this.getClass(), RESPONSE);
 
         /*

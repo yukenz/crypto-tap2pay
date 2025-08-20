@@ -37,7 +37,7 @@ public class LogUtils {
         );
     }
 
-    public static void logHttpResponseFromGet(String methodName, Class<?> clazz, JsonNode response) {
+    public static void logHttpResponseWithoutToken(String methodName, Class<?> clazz, JsonNode response) {
         log.info("[HTTP-RESPONSE - {}:{}] : {}",
                 clazz.getSimpleName(),
                 methodName + "()",

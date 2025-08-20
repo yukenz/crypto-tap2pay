@@ -6,7 +6,6 @@ import id.co.awan.tap2pay.utils.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,10 +21,8 @@ public class CoinGeckoService extends CoinGeckoServiceAbstract {
     ping() {
 
         ResponseEntity<JsonNode> responseEntity = super.executeGetRest("/api/v3/ping");
-
-        final JsonNode RESPONSE = responseEntity.getBody();
-        Assert.notNull(RESPONSE, "Rest Template Response shouldn't be null");
-        LogUtils.logHttpResponseFromGet("ping", this.getClass(), RESPONSE);
+        final JsonNode RESPONSE = super.parseResponseJsonNode(responseEntity);
+        LogUtils.logHttpResponseWithoutToken("ping", this.getClass(), RESPONSE);
 
         return responseEntity.getBody();
     }
@@ -44,9 +41,8 @@ public class CoinGeckoService extends CoinGeckoServiceAbstract {
 
         ResponseEntity<JsonNode> responseEntity = super.executeGetRest("/api/v3/simple/token_price/id", QUERY_PARAM);
 
-        final JsonNode RESPONSE = responseEntity.getBody();
-        Assert.notNull(RESPONSE, "Rest Template Response shouldn't be null");
-        LogUtils.logHttpResponseFromGet("coinPrice", this.getClass(), RESPONSE);
+        final JsonNode RESPONSE = super.parseResponseJsonNode(responseEntity);
+        LogUtils.logHttpResponseWithoutToken("ping", this.getClass(), RESPONSE);
 
         return responseEntity.getBody();
     }

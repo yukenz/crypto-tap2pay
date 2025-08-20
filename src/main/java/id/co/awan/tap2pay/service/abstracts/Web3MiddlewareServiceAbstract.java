@@ -41,8 +41,11 @@ public class Web3MiddlewareServiceAbstract {
     protected JsonNode parseResponseJsonNode(ResponseEntity<JsonNode> responseEntity) {
 
         JsonNode responseJson = responseEntity.getBody();
-        Assert.notNull(responseJson, "Rest Template Response shouldn't be null");
         HttpStatusCode httpStatusCode = responseEntity.getStatusCode();
+
+        Assert.notNull(responseJson, () -> {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "01" + "|" + "ResponseJson should not be null");
+        });
 
         if (!httpStatusCode.equals(HttpStatus.OK)) {
             String error = responseJson.at("/error").asText("General Error");

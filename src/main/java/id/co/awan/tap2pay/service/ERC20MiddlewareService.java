@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import id.co.awan.tap2pay.service.abstracts.Web3MiddlewareServiceAbstract;
+import id.co.awan.tap2pay.utils.LogUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -42,8 +43,10 @@ public class ERC20MiddlewareService extends Web3MiddlewareServiceAbstract {
         REQUEST.put("chain", chain);
         REQUEST.put("erc20Address", erc20Address);
 
+        String reqToken = LogUtils.logHttpRequest(this.getClass(), "totalSupply", REQUEST);
         ResponseEntity<JsonNode> responseEntity = executePostRest("/api/web3/erc20/read/totalSupply", REQUEST);
         JsonNode responseJson = super.parseResponseJsonNode(responseEntity);
+        LogUtils.logHttpResponse(reqToken, this.getClass(), responseJson);
 
         String data = responseJson.at("/data").asText(null);
         return new BigInteger(data);
@@ -63,8 +66,10 @@ public class ERC20MiddlewareService extends Web3MiddlewareServiceAbstract {
         REQUEST.put("sourceAddress", sourceAddress);
         REQUEST.put("destinationAddress", destinationAddress);
 
+        String reqToken = LogUtils.logHttpRequest(this.getClass(), "allowance", REQUEST);
         ResponseEntity<JsonNode> responseEntity = executePostRest("/api/web3/erc20/read/allowance", REQUEST);
         JsonNode responseJson = super.parseResponseJsonNode(responseEntity);
+        LogUtils.logHttpResponse(reqToken, this.getClass(), responseJson);
 
         String data = responseJson.at("/data").asText(null);
         return new BigInteger(data);
@@ -115,8 +120,10 @@ public class ERC20MiddlewareService extends Web3MiddlewareServiceAbstract {
             case WRITE -> "/api/web3/erc20/write/transfer";
         };
 
+        String reqToken = LogUtils.logHttpRequest(this.getClass(), "transfer", REQUEST);
         ResponseEntity<JsonNode> responseEntity = executePostRest(URL_PATH, REQUEST);
         JsonNode responseJson = super.parseResponseJsonNode(responseEntity);
+        LogUtils.logHttpResponse(reqToken, this.getClass(), responseJson);
 
         String trxReceipt = responseJson.at("/trxReceipt").asText(null);
         String estimateWei = responseJson.at("/estimateWei").asText(null);
@@ -151,8 +158,10 @@ public class ERC20MiddlewareService extends Web3MiddlewareServiceAbstract {
             case WRITE -> "/api/web3/erc20/write/transferFrom";
         };
 
+        String reqToken = LogUtils.logHttpRequest(this.getClass(), "transferFrom", REQUEST);
         ResponseEntity<JsonNode> responseEntity = executePostRest(URL_PATH, REQUEST);
         JsonNode responseJson = super.parseResponseJsonNode(responseEntity);
+        LogUtils.logHttpResponse(reqToken, this.getClass(), responseJson);
 
         String trxReceipt = responseJson.at("/trxReceipt").asText(null);
         String estimateWei = responseJson.at("/estimateWei").asText(null);
@@ -185,8 +194,10 @@ public class ERC20MiddlewareService extends Web3MiddlewareServiceAbstract {
             case WRITE -> "/api/web3/erc20/write/approve";
         };
 
+        String reqToken = LogUtils.logHttpRequest(this.getClass(), "approve", REQUEST);
         ResponseEntity<JsonNode> responseEntity = executePostRest(URL_PATH, REQUEST);
         JsonNode responseJson = super.parseResponseJsonNode(responseEntity);
+        LogUtils.logHttpResponse(reqToken, this.getClass(), responseJson);
 
         String trxReceipt = responseJson.at("/trxReceipt").asText(null);
         String estimateWei = responseJson.at("/estimateWei").asText(null);
